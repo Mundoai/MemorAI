@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.env
+.env.local
+__pycache__/
+*.pyc
+.claude/
+_bmad/
+bmm/
+bmb/
+model_cache/
+qdrant_data/
+.next/
+*.egg-info/
+.mypy_cache/
+.pytest_cache/

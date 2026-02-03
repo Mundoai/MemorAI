@@ -1,0 +1,48 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.13.2
+    container_name: memorai-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:6333/readyz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: memorai-api
+    ports:
+      - "8000:8000"
+    environment:
+      - MEMORAI_OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - MEMORAI_QDRANT_HOST=qdrant
+      - MEMORAI_QDRANT_PORT=6333
+      - MEMORAI_API_KEY=${MEMORAI_API_KEY:-}
+      - MEMORAI_LLM_MODEL=${MEMORAI_LLM_MODEL:-stepfun/step-3.5-flash:free}
+      - MEMORAI_EMBEDDING_MODEL=multi-qa-MiniLM-L6-cos-v1
+    volumes:
+      - model_cache:/root/.cache
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  qdrant_data:
+    driver: local
+  model_cache:
+    driver: local

@@ -1,0 +1,11 @@
+.claude/
+_bmad/
+bmm/
+bmb/
+mcp-server/node_modules/
+mcp-server/dist/
+*.md
+.git
+.env
+.env.example
+coolify-deployment-guide.md

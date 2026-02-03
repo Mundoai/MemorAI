@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "memorai": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["/Users/yoanvaliente/Desktop/PROJECTS/MemorAI/mcp-server/dist/index.js"],
+      "env": {
+        "MEMORAI_API_URL": "http://localhost:8000"
+      }
+    },
+    "cipher": {
+      "type": "sse",
+      "url": "https://cipher.mywebsites.dev/api/mcp/sse",
+      "headers": {
+        "Authorization": "Bearer sk-74868fbfe7dfce6ca54a6fa6a841834d25785c553604386581475ed884ec5667"
+      }
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"]
+    }
+  }
+}
