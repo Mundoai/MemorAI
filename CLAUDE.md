@@ -1,5 +1,7 @@
 # CLAUDE.md - MemorAI Project Instructions
 
+**GitHub:** https://github.com/Mundoai/MemorAI
+
 ## Project Overview
 
 MemorAI is a persistent semantic memory layer for Claude Code and subagents, powered by Mem0. It provides intelligent memory storage with LLM-powered extraction, deduplication, contradiction resolution, and relevance decay — so AI agents can remember context, decisions, preferences, and patterns across sessions and projects.
