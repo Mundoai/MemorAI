@@ -2,6 +2,7 @@ import logging
 from contextlib import asynccontextmanager
 from typing import Any
 
+import jwt
 from fastapi import FastAPI, HTTPException, Header, Depends, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -135,8 +136,28 @@ class HealthResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-async def verify_api_key(x_api_key: str | None = Header(default=None)):
-    """If MEMORAI_API_KEY is configured, require a matching header."""
+async def verify_api_key(
+    x_api_key: str | None = Header(default=None),
+    authorization: str | None = Header(default=None),
+):
+    """
+    Authenticate requests via:
+    1. JWT Bearer token (Authorization: Bearer <token>)
+    2. Legacy API key (X-API-Key header)
+    3. No auth if MEMORAI_API_KEY is not configured
+    """
+    # Try JWT Bearer token first
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization[7:]
+        try:
+            jwt.decode(token, settings.jwt_secret, algorithms=["HS256"])
+            return  # JWT valid
+        except jwt.ExpiredSignatureError:
+            raise HTTPException(status_code=401, detail="JWT token has expired")
+        except jwt.InvalidTokenError:
+            raise HTTPException(status_code=401, detail="Invalid JWT token")
+
+    # Fall back to legacy API key
     if settings.api_key and settings.api_key != x_api_key:
         raise HTTPException(status_code=401, detail="Invalid or missing API key")
 

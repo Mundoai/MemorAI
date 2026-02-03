@@ -19,6 +19,10 @@ class Settings(BaseSettings):
 
     # API auth
     api_key: str = ""
+    jwt_secret: str = "memorai-jwt-secret-change-in-production"
+
+    # PostgreSQL (for spaces, users, etc.)
+    database_url: str = ""
 
     class Config:
         env_prefix = "MEMORAI_"

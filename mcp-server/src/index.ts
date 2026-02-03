@@ -491,6 +491,150 @@ Use this to diagnose connectivity issues before attempting other operations.`,
   }
 );
 
+// ---- auto_recall ----------------------------------------------------------
+
+server.tool(
+  "auto_recall",
+  `Automatically recall relevant memories for a project at session start.
+
+Call this tool at the beginning of a session to get the most relevant context
+for the current project. Returns the top memories sorted by relevance, including
+recent decisions, preferences, patterns, and gotchas.
+
+Useful for agents to bootstrap their context without the user having to
+explicitly search for relevant information.`,
+  {
+    project: z
+      .string()
+      .describe("Project name to recall context for (maps to user_id)"),
+    context: z
+      .string()
+      .optional()
+      .describe(
+        "Optional context about what the agent is about to work on, to improve recall relevance"
+      ),
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(50)
+      .optional()
+      .default(15)
+      .describe("Maximum number of memories to recall (default 15)"),
+  },
+  async ({ project, context, limit }) => {
+    try {
+      // If context is provided, use semantic search; otherwise list recent
+      if (context) {
+        const body: Record<string, unknown> = {
+          query: context,
+          user_id: project,
+          limit: limit ?? 15,
+        };
+
+        const result = await apiRequest({
+          method: "POST",
+          path: "/search",
+          body,
+        });
+
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      }
+
+      // No context: return all memories for the project
+      const result = await apiRequest({
+        method: "GET",
+        path: "/memories",
+        params: { user_id: project },
+      });
+
+      // Limit the results
+      const memories = Array.isArray(result)
+        ? result.slice(0, limit ?? 15)
+        : result;
+
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify(memories, null, 2),
+          },
+        ],
+      };
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Unknown error";
+      return {
+        content: [{ type: "text" as const, text: `Error: ${message}` }],
+        isError: true,
+      };
+    }
+  }
+);
+
+// ---- memory_context -------------------------------------------------------
+
+server.tool(
+  "memory_context",
+  `Get a structured context summary for a project/space.
+
+Returns a summary of the project's memory space including:
+- Total memory count
+- Recent memories
+- Key patterns and decisions
+
+Use this to quickly understand what a project is about without reading
+every individual memory.`,
+  {
+    project: z
+      .string()
+      .describe("Project name to get context for (maps to user_id)"),
+  },
+  async ({ project }) => {
+    try {
+      const result = await apiRequest<unknown[]>({
+        method: "GET",
+        path: "/memories",
+        params: { user_id: project },
+      });
+
+      const memories = Array.isArray(result) ? result : [];
+      const total = memories.length;
+      const recent = memories.slice(0, 10);
+
+      const summary = {
+        project,
+        total_memories: total,
+        recent_memories: recent,
+        summary: `Project "${project}" has ${total} stored memories.`,
+      };
+
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify(summary, null, 2),
+          },
+        ],
+      };
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Unknown error";
+      return {
+        content: [{ type: "text" as const, text: `Error: ${message}` }],
+        isError: true,
+      };
+    }
+  }
+);
+
 // ---------------------------------------------------------------------------
 // Start the server
 // ---------------------------------------------------------------------------
