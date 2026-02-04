@@ -36,8 +36,8 @@ services:
     build:
       context: ./api
       dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     environment:
       - MEMORAI_OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
       - MEMORAI_QDRANT_HOST=qdrant
@@ -66,8 +66,8 @@ services:
     build:
       context: ./dashboard
       dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-memorai}:${POSTGRES_PASSWORD:-memorai_secret}@postgres:5432/${POSTGRES_DB:-memorai}
       - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
