@@ -15,20 +15,30 @@ interface Memory {
 
 async function getStats(userId: string) {
   try {
-    // Get space count and space slugs
-    const memberSpaces = await db
-      .select({
-        count: count(),
-      })
-      .from(spaceMembers)
-      .innerJoin(spaces, eq(spaces.id, spaceMembers.spaceId))
-      .where(and(eq(spaceMembers.userId, userId), isNull(spaces.deletedAt)));
-
-    const spaceSlugs = await db
+    // Get space slugs via membership
+    const memberSlugs = await db
       .select({ slug: spaces.slug })
       .from(spaceMembers)
       .innerJoin(spaces, eq(spaces.id, spaceMembers.spaceId))
       .where(and(eq(spaceMembers.userId, userId), isNull(spaces.deletedAt)));
+
+    // Also include spaces created by this user (owner fallback)
+    const createdSlugs = await db
+      .select({ slug: spaces.slug })
+      .from(spaces)
+      .where(and(eq(spaces.createdBy, userId), isNull(spaces.deletedAt)));
+
+    // Merge and deduplicate
+    const seenSlugs = new Set(memberSlugs.map((s) => s.slug));
+    const allSlugs = [...memberSlugs];
+    for (const s of createdSlugs) {
+      if (!seenSlugs.has(s.slug)) {
+        allSlugs.push(s);
+        seenSlugs.add(s.slug);
+      }
+    }
+    const spaceSlugs = allSlugs;
+    console.log(`[getStats] userId=${userId}, memberSlugs=${memberSlugs.length}, createdSlugs=${createdSlugs.length}, total=${spaceSlugs.length}`);
 
     // M2 fix: Fetch actual memory count from all user's spaces
     let memoryCount = 0;
@@ -44,13 +54,14 @@ async function getStats(userId: string) {
         } else if (result && "results" in result) {
           memoryCount += result.results.length;
         }
-      } catch {
-        // Skip spaces that fail to fetch
+      } catch (err) {
+        console.error(`[getStats] Failed to fetch memories for slug=${slug}:`, err);
       }
     }
+    console.log(`[getStats] total memoryCount=${memoryCount}`);
 
     return {
-      spaces: memberSpaces[0]?.count ?? 0,
+      spaces: spaceSlugs.length,
       memories: memoryCount,
     };
   } catch {
