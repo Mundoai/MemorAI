@@ -46,11 +46,15 @@ async function apiRequest<T = unknown>(opts: ApiRequestOptions): Promise<T> {
 
   let response: Response;
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
     response = await fetch(url.toString(), {
       method: opts.method,
       headers,
       body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : "Unknown network error";
