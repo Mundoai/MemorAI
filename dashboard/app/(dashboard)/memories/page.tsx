@@ -58,8 +58,10 @@ async function getMemoriesForSlug(slug: string): Promise<Memory[]> {
     });
     if (Array.isArray(result)) return result;
     if (result && "results" in result) return result.results;
+    console.error(`[getMemoriesForSlug] Unexpected result format for slug=${slug}:`, result);
     return [];
-  } catch {
+  } catch (err) {
+    console.error(`[getMemoriesForSlug] Failed for slug=${slug}:`, err);
     return [];
   }
 }
@@ -94,7 +96,9 @@ export default async function MemoriesPage({
   const params = await searchParams;
   const userSpaces = session?.user?.id ? await getUserSpaces(session.user.id) : [];
   const allSlugs = userSpaces.map((s) => s.spaceSlug);
+  console.log(`[MemoriesPage] userId=${session?.user?.id}, spaces=${userSpaces.length}, slugs=${JSON.stringify(allSlugs)}, filter=${params.space}`);
   const memories = await getMemories(params.space, allSlugs);
+  console.log(`[MemoriesPage] fetched ${memories.length} memories`);
 
   // Get bookmarked memory IDs for this user
   let bookmarkedIds: string[] = [];
