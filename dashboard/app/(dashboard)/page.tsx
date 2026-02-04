@@ -2,29 +2,67 @@ import { auth } from "@/lib/auth";
 import { apiRequest } from "@/lib/api/client";
 import { db } from "@/lib/db";
 import { spaces, spaceMembers } from "@/lib/db/schema";
-import { eq, count } from "drizzle-orm";
+import { eq, and, count, isNull } from "drizzle-orm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Brain, LayoutGrid, Search, Activity } from "lucide-react";
 import Link from "next/link";
+import { ApiStatus } from "@/components/dashboard/api-status";
+
+interface Memory {
+  id: string;
+  [key: string]: unknown;
+}
 
 async function getStats(userId: string) {
   try {
-    const spaceCount = await db
-      .select({ count: count() })
+    // Get space count and space slugs
+    const memberSpaces = await db
+      .select({
+        count: count(),
+      })
       .from(spaceMembers)
-      .where(eq(spaceMembers.userId, userId));
+      .innerJoin(spaces, eq(spaces.id, spaceMembers.spaceId))
+      .where(and(eq(spaceMembers.userId, userId), isNull(spaces.deletedAt)));
+
+    const spaceSlugs = await db
+      .select({ slug: spaces.slug })
+      .from(spaceMembers)
+      .innerJoin(spaces, eq(spaces.id, spaceMembers.spaceId))
+      .where(and(eq(spaceMembers.userId, userId), isNull(spaces.deletedAt)));
+
+    // M2 fix: Fetch actual memory count from all user's spaces
+    let memoryCount = 0;
+    for (const { slug } of spaceSlugs) {
+      try {
+        const result = await apiRequest<Memory[] | { results: Memory[] }>({
+          method: "GET",
+          path: "/memories",
+          params: { user_id: slug },
+        });
+        if (Array.isArray(result)) {
+          memoryCount += result.length;
+        } else if (result && "results" in result) {
+          memoryCount += result.results.length;
+        }
+      } catch {
+        // Skip spaces that fail to fetch
+      }
+    }
 
     return {
-      spaces: spaceCount[0]?.count ?? 0,
+      spaces: memberSpaces[0]?.count ?? 0,
+      memories: memoryCount,
     };
   } catch {
-    return { spaces: 0 };
+    return { spaces: 0, memories: 0 };
   }
 }
 
 export default async function DashboardHome() {
   const session = await auth();
-  const stats = session?.user?.id ? await getStats(session.user.id) : { spaces: 0 };
+  const stats = session?.user?.id
+    ? await getStats(session.user.id)
+    : { spaces: 0, memories: 0 };
 
   return (
     <div className="space-y-6">
@@ -55,7 +93,8 @@ export default async function DashboardHome() {
             <Brain className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">--</div>
+            {/* M2 fix: show actual memory count */}
+            <div className="text-2xl font-bold">{stats.memories}</div>
             <p className="text-xs text-muted-foreground">
               Across all spaces
             </p>
@@ -84,10 +123,8 @@ export default async function DashboardHome() {
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-500">Healthy</div>
-            <p className="text-xs text-muted-foreground">
-              FastAPI + Qdrant running
-            </p>
+            {/* M1 fix: live health status instead of hardcoded "Healthy" */}
+            <ApiStatus />
           </CardContent>
         </Card>
       </div>
