@@ -33,12 +33,17 @@ export async function apiRequest<T = unknown>(opts: RequestOptions): Promise<T> 
     headers["X-API-Key"] = API_KEY;
   }
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+
   const response = await fetch(url.toString(), {
     method: opts.method,
     headers,
     body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
     cache: "no-store",
+    signal: controller.signal,
   });
+  clearTimeout(timeout);
 
   if (!response.ok) {
     const text = await response.text().catch(() => "");
