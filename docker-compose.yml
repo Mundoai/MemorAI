@@ -43,7 +43,7 @@ services:
       - MEMORAI_QDRANT_HOST=qdrant
       - MEMORAI_QDRANT_PORT=6333
       - MEMORAI_API_KEY=${MEMORAI_API_KEY:-}
-      - MEMORAI_LLM_MODEL=${MEMORAI_LLM_MODEL:-stepfun/step-3.5-flash:free}
+      - MEMORAI_LLM_MODEL=${MEMORAI_LLM_MODEL:-google/gemini-2.0-flash-exp:free}
       - MEMORAI_EMBEDDING_MODEL=multi-qa-MiniLM-L6-cos-v1
       - MEMORAI_DATABASE_URL=postgresql://${POSTGRES_USER:-memorai}:${POSTGRES_PASSWORD:-memorai_secret}@postgres:5432/${POSTGRES_DB:-memorai}
       - MEMORAI_JWT_SECRET=${JWT_SECRET:-memorai-jwt-secret-change-in-production}
