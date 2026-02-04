@@ -119,7 +119,7 @@ cd mcp-server && npm run build
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `OPENROUTER_API_KEY` | *(required)* | OpenRouter API key for Mem0 LLM processing |
-| `MEMORAI_LLM_MODEL` | `google/gemini-2.0-flash-exp:free` | Free OpenRouter model for memory processing (must support JSON mode) |
+| `MEMORAI_LLM_MODEL` | `arcee-ai/trinity-large-preview:free` | Free OpenRouter model for memory processing (must support JSON mode) |
 | `MEMORAI_API_KEY` | *(empty)* | Optional API auth key |
 | `MEMORAI_API_URL` | `http://localhost:8000` | API base URL for MCP server |
 | `MEMORAI_QDRANT_HOST` | `qdrant` | Qdrant hostname |
@@ -127,12 +127,12 @@ cd mcp-server && npm run build
 
 ## Free OpenRouter Models for Mem0
 
-| Model | Context | Best For |
-|-------|---------|----------|
-| `google/gemini-2.0-flash-exp:free` | 1M | Default — supports JSON mode for Mem0 |
-| `arcee-ai/trinity-large-preview:free` | 131K | Complex extraction (400B MoE) |
-| `nvidia/nemotron-3-nano-30b-a3b:free` | 256K | Agentic workflows |
-| `arcee-ai/trinity-mini:free` | 131K | Lightweight alternative |
+| Model | Context | JSON Mode | Best For |
+|-------|---------|-----------|----------|
+| `arcee-ai/trinity-large-preview:free` | 131K | ✓ | Default — complex extraction (400B MoE) |
+| `upstage/solar-pro-3:free` | 128K | ✓ | Alternative with structured output |
+| `arcee-ai/trinity-mini:free` | 131K | ✓ | Lightweight alternative |
+| `tngtech/tng-r1t-chimera:free` | 164K | ✓ | Large context with structured output |
 
 ## Project Structure
 
