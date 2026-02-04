@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { Brain } from "lucide-react";
 import {
   Card,
@@ -8,9 +9,15 @@ import {
 } from "@/components/ui/card";
 import { SignInForm } from "./signin-form";
 
-export default function LoginPage() {
-  // Check env vars at RUNTIME (inside component), not build time (module scope).
-  // Docker builds don't have env vars, so module-scope checks always return false.
+// Force dynamic rendering so env vars are checked at request time, not build time.
+// Without this, Next.js statically generates the page during Docker build (when
+// OAuth env vars aren't set), permanently showing "No providers configured".
+export const dynamic = "force-dynamic";
+
+export default async function LoginPage() {
+  // Reading headers forces dynamic rendering as a belt-and-suspenders measure
+  await headers();
+
   const hasGitHub =
     !!process.env.AUTH_GITHUB_ID && !!process.env.AUTH_GITHUB_SECRET;
   const hasGoogle =
