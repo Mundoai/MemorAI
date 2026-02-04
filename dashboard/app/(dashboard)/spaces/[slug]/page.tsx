@@ -58,12 +58,12 @@ async function getSpaceTags(spaceId: string) {
 
 async function getSpaceMemories(slug: string) {
   try {
-    const result = await apiRequest<unknown[]>({
+    const result = await apiRequest<{ results?: unknown[] }>({
       method: "GET",
       path: "/memories",
       params: { user_id: slug },
     });
-    return Array.isArray(result) ? result.length : 0;
+    return Array.isArray(result?.results) ? result.results.length : 0;
   } catch {
     return 0;
   }
