@@ -1,8 +1,6 @@
-"use client";
-
-import { signOut } from "next-auth/react";
 import { LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { handleSignOut } from "@/app/login/actions";
 
 interface HeaderProps {
   user?: {
@@ -33,13 +31,11 @@ export function Header({ user }: HeaderProps) {
             {user?.name ?? user?.email}
           </span>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => signOut({ callbackUrl: "/login" })}
-        >
-          <LogOut className="h-4 w-4" />
-        </Button>
+        <form action={handleSignOut}>
+          <Button variant="ghost" size="icon" type="submit">
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </form>
       </div>
     </header>
   );
