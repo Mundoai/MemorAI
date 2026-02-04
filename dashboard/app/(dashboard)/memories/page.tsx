@@ -27,16 +27,12 @@ async function getUserSpaces(userId: string) {
     .where(and(eq(spaceMembers.userId, userId), eq(spaces.deletedAt, null!)));
 }
 
-async function getMemories(spaceSlug?: string): Promise<Memory[]> {
+async function getMemoriesForSlug(slug: string): Promise<Memory[]> {
   try {
-    const params: Record<string, string | undefined> = {};
-    if (spaceSlug) {
-      params.user_id = spaceSlug;
-    }
     const result = await apiRequest<Memory[] | { results: Memory[] }>({
       method: "GET",
       path: "/memories",
-      params,
+      params: { user_id: slug },
     });
     if (Array.isArray(result)) return result;
     if (result && "results" in result) return result.results;
@@ -46,6 +42,27 @@ async function getMemories(spaceSlug?: string): Promise<Memory[]> {
   }
 }
 
+async function getMemories(
+  spaceSlug?: string,
+  allSlugs?: string[]
+): Promise<Memory[]> {
+  if (spaceSlug) {
+    return getMemoriesForSlug(spaceSlug);
+  }
+  // "All Spaces" — query each space and merge results
+  if (allSlugs && allSlugs.length > 0) {
+    const results = await Promise.all(allSlugs.map(getMemoriesForSlug));
+    return results
+      .flat()
+      .sort(
+        (a, b) =>
+          new Date(b.created_at ?? 0).getTime() -
+          new Date(a.created_at ?? 0).getTime()
+      );
+  }
+  return [];
+}
+
 export default async function MemoriesPage({
   searchParams,
 }: {
@@ -53,8 +70,9 @@ export default async function MemoriesPage({
 }) {
   const session = await auth();
   const params = await searchParams;
-  const memories = await getMemories(params.space);
   const userSpaces = session?.user?.id ? await getUserSpaces(session.user.id) : [];
+  const allSlugs = userSpaces.map((s) => s.spaceSlug);
+  const memories = await getMemories(params.space, allSlugs);
 
   // Get bookmarked memory IDs for this user
   let bookmarkedIds: string[] = [];
