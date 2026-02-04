@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     # OpenRouter (free models for Mem0's LLM processing)
     openrouter_api_key: str = ""
-    llm_model: str = "stepfun/step-3.5-flash:free"  # 256K context, reasoning, FREE
+    llm_model: str = "google/gemini-2.0-flash-exp:free"  # Supports JSON mode required by Mem0
     llm_temperature: float = 0.1
     llm_max_tokens: int = 2000
 
