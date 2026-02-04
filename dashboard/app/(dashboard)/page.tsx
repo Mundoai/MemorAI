@@ -23,11 +23,8 @@ async function getStats(userId: string) {
 }
 
 export default async function DashboardHome() {
-  console.log("[home] Starting home page render...");
   const session = await auth();
-  console.log("[home] auth() done, user:", session?.user?.id);
   const stats = session?.user?.id ? await getStats(session.user.id) : { spaces: 0 };
-  console.log("[home] getStats done:", JSON.stringify(stats));
 
   return (
     <div className="space-y-6">

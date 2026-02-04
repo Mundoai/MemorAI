@@ -36,29 +36,33 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     signIn: "/login",
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;
+      }
+      // Fetch role from DB and store in JWT (runs on Node.js runtime during
+      // sign-in and token refresh, NOT on Edge runtime like the session callback).
+      if (token.id && (trigger === "signIn" || trigger === "signUp" || !token.role)) {
+        try {
+          const dbUser = await db
+            .select({ role: users.role })
+            .from(users)
+            .where(eq(users.id, token.id as string))
+            .limit(1);
+          token.role = dbUser[0]?.role ?? "user";
+        } catch {
+          token.role = "user";
+        }
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user && token.id) {
         session.user.id = token.id as string;
-        // Fetch role from DB
-        try {
-          console.log("[auth] session callback: querying DB for user role, id:", token.id);
-          const dbUser = await db
-            .select({ role: users.role })
-            .from(users)
-            .where(eq(users.id, token.id as string))
-            .limit(1);
-          console.log("[auth] session callback: DB query done, role:", dbUser[0]?.role);
-          (session.user as { role?: string }).role = dbUser[0]?.role ?? "user";
-        } catch (e) {
-          console.error("[auth] session callback: DB query failed:", e);
-          (session.user as { role?: string }).role = "user";
-        }
+        // Role is already stored in the JWT — no DB query needed here.
+        // This callback runs on both Edge (middleware) and Node.js runtimes,
+        // so it must avoid DB calls (postgres doesn't work on Edge).
+        (session.user as { role?: string }).role = (token.role as string) ?? "user";
       }
       return session;
     },
