@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { apiRequest } from "@/lib/api/client";
 import { db } from "@/lib/db";
 import { spaceMembers, spaces, memoryTags, tags, memoryBookmarks } from "@/lib/db/schema";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and, inArray, isNull } from "drizzle-orm";
 import { MemoryBrowser } from "@/components/memories/memory-browser";
 
 interface Memory {
@@ -24,7 +24,7 @@ async function getUserSpaces(userId: string) {
     })
     .from(spaceMembers)
     .innerJoin(spaces, eq(spaces.id, spaceMembers.spaceId))
-    .where(and(eq(spaceMembers.userId, userId), eq(spaces.deletedAt, null!)));
+    .where(and(eq(spaceMembers.userId, userId), isNull(spaces.deletedAt)));
 }
 
 async function getMemoriesForSlug(slug: string): Promise<Memory[]> {
