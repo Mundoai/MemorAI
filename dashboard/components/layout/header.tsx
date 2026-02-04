@@ -1,6 +1,6 @@
 import { LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { handleSignOut } from "@/app/login/actions";
+import { SignOutButton } from "./signout-button";
 
 interface HeaderProps {
   user?: {
@@ -31,11 +31,7 @@ export function Header({ user }: HeaderProps) {
             {user?.name ?? user?.email}
           </span>
         </div>
-        <form action={handleSignOut}>
-          <Button variant="ghost" size="icon" type="submit">
-            <LogOut className="h-4 w-4" />
-          </Button>
-        </form>
+        <SignOutButton />
       </div>
     </header>
   );
