@@ -51,10 +51,15 @@ export default async function MemoriesPage({
 }: {
   searchParams: Promise<{ space?: string; bookmarked?: string }>;
 }) {
+  console.log("[memories] Starting page render...");
   const session = await auth();
+  console.log("[memories] auth() done, user:", session?.user?.id);
   const params = await searchParams;
+  console.log("[memories] searchParams resolved:", JSON.stringify(params));
   const memories = await getMemories(params.space);
+  console.log("[memories] getMemories done, count:", memories.length);
   const userSpaces = session?.user?.id ? await getUserSpaces(session.user.id) : [];
+  console.log("[memories] getUserSpaces done, count:", userSpaces.length);
 
   // Get bookmarked memory IDs for this user
   let bookmarkedIds: string[] = [];
