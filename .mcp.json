@@ -5,7 +5,7 @@
       "command": "node",
       "args": ["/Users/yoanvaliente/Desktop/PROJECTS/MemorAI/mcp-server/dist/index.js"],
       "env": {
-        "MEMORAI_API_URL": "http://localhost:8000"
+        "MEMORAI_API_URL": "https://memoria-api.mywebsites.dev"
       }
     },
     "cipher": {
@@ -19,6 +19,14 @@
       "type": "stdio",
       "command": "npx",
       "args": ["@playwright/mcp@latest"]
+    },
+    "hostinger-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["hostinger-api-mcp@latest"],
+      "env": {
+        "API_TOKEN": "dFUNkFrH6a4Sb84Cdb3gE8Eps3m0FaLen9Gw2SAjca4e60a4"
+      }
     }
   }
 }
