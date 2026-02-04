@@ -34,7 +34,7 @@ export async function apiRequest<T = unknown>(opts: RequestOptions): Promise<T> 
   }
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10000);
+  const timeout = setTimeout(() => controller.abort(), 30000);
 
   const response = await fetch(url.toString(), {
     method: opts.method,

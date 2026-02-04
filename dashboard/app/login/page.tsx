@@ -8,12 +8,13 @@ import {
 } from "@/components/ui/card";
 import { SignInForm } from "./signin-form";
 
-const hasGitHub =
-  !!process.env.AUTH_GITHUB_ID && !!process.env.AUTH_GITHUB_SECRET;
-const hasGoogle =
-  !!process.env.AUTH_GOOGLE_ID && !!process.env.AUTH_GOOGLE_SECRET;
-
 export default function LoginPage() {
+  // Check env vars at RUNTIME (inside component), not build time (module scope).
+  // Docker builds don't have env vars, so module-scope checks always return false.
+  const hasGitHub =
+    !!process.env.AUTH_GITHUB_ID && !!process.env.AUTH_GITHUB_SECRET;
+  const hasGoogle =
+    !!process.env.AUTH_GOOGLE_ID && !!process.env.AUTH_GOOGLE_SECRET;
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
       <Card className="w-full max-w-md">

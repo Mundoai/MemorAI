@@ -2,7 +2,11 @@ export { auth as middleware } from "@/lib/auth";
 
 export const config = {
   matcher: [
-    // Protect all routes except login, api/auth, public assets
-    "/((?!login|api/auth|_next/static|_next/image|favicon.ico).*)",
+    // Protect page routes only. Exclude:
+    // - /login (auth page)
+    // - /api/* (API routes handle their own auth via session checks)
+    // - /_next/* (static assets, images, HMR)
+    // - /favicon.ico
+    "/((?!login|api|_next|favicon.ico).*)",
   ],
 };

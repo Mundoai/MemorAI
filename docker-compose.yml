@@ -1,6 +1,6 @@
 services:
   qdrant:
-    image: qdrant/qdrant:v1.13.2
+    image: qdrant/qdrant:v1.16.3
     expose:
       - "6333"
       - "6334"
@@ -15,7 +15,7 @@ services:
       start_period: 15s
 
   postgres:
-    image: postgres:16-alpine
+    image: postgres:17-alpine
     expose:
       - "5432"
     environment:
@@ -70,6 +70,10 @@ services:
       - "3000"
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-memorai}:${POSTGRES_PASSWORD:-memorai_secret}@postgres:5432/${POSTGRES_DB:-memorai}
+      # AUTH_URL is NextAuth v5's preferred env var for the canonical base URL.
+      # Must match the public URL of the dashboard (e.g. https://memoria.mywebsites.dev).
+      - AUTH_URL=${AUTH_URL:-${NEXTAUTH_URL:-http://localhost:3000}}
+      - AUTH_TRUST_HOST=true
       - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-memorai-nextauth-secret-change-in-production}
       - AUTH_GITHUB_ID=${AUTH_GITHUB_ID:-}
@@ -81,6 +85,8 @@ services:
       - JWT_SECRET=${JWT_SECRET:-memorai-jwt-secret-change-in-production}
     depends_on:
       postgres:
+        condition: service_healthy
+      api:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
