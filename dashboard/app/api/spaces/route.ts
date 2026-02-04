@@ -87,7 +87,8 @@ export async function GET() {
   }
 
   try {
-    const result = await db
+    // Spaces via membership
+    const memberSpaces = await db
       .select({
         id: spaces.id,
         name: spaces.name,
@@ -102,6 +103,31 @@ export async function GET() {
       .where(
         and(eq(spaceMembers.userId, session.user.id), isNull(spaces.deletedAt))
       );
+
+    // Also include spaces created by this user (owner fallback)
+    const createdSpaces = await db
+      .select({
+        id: spaces.id,
+        name: spaces.name,
+        slug: spaces.slug,
+        description: spaces.description,
+        icon: spaces.icon,
+        createdAt: spaces.createdAt,
+      })
+      .from(spaces)
+      .where(
+        and(eq(spaces.createdBy, session.user.id), isNull(spaces.deletedAt))
+      );
+
+    // Merge and deduplicate
+    const seen = new Set(memberSpaces.map((s) => s.id));
+    const result = [...memberSpaces];
+    for (const s of createdSpaces) {
+      if (!seen.has(s.id)) {
+        result.push({ ...s, role: "owner" as const });
+        seen.add(s.id);
+      }
+    }
 
     return Response.json(result);
   } catch (err) {

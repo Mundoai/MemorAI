@@ -16,7 +16,8 @@ interface Memory {
 }
 
 async function getUserSpaces(userId: string) {
-  return db
+  // Get spaces via membership
+  const memberSpaces = await db
     .select({
       spaceId: spaceMembers.spaceId,
       spaceName: spaces.name,
@@ -25,6 +26,27 @@ async function getUserSpaces(userId: string) {
     .from(spaceMembers)
     .innerJoin(spaces, eq(spaces.id, spaceMembers.spaceId))
     .where(and(eq(spaceMembers.userId, userId), isNull(spaces.deletedAt)));
+
+  // Also include spaces created by this user (owner fallback)
+  const createdSpaces = await db
+    .select({
+      spaceId: spaces.id,
+      spaceName: spaces.name,
+      spaceSlug: spaces.slug,
+    })
+    .from(spaces)
+    .where(and(eq(spaces.createdBy, userId), isNull(spaces.deletedAt)));
+
+  // Merge and deduplicate by spaceId
+  const seen = new Set(memberSpaces.map((s) => s.spaceId));
+  const merged = [...memberSpaces];
+  for (const s of createdSpaces) {
+    if (!seen.has(s.spaceId)) {
+      merged.push(s);
+      seen.add(s.spaceId);
+    }
+  }
+  return merged;
 }
 
 async function getMemoriesForSlug(slug: string): Promise<Memory[]> {

@@ -9,6 +9,7 @@ import Link from "next/link";
 import { SpaceCreateButton } from "@/components/spaces/space-create-button";
 
 async function getUserSpaces(userId: string) {
+  // Get spaces via membership
   const memberSpaces = await db
     .select({
       id: spaces.id,
@@ -23,7 +24,29 @@ async function getUserSpaces(userId: string) {
     .innerJoin(spaces, eq(spaces.id, spaceMembers.spaceId))
     .where(and(eq(spaceMembers.userId, userId), isNull(spaces.deletedAt)));
 
-  return memberSpaces;
+  // Also include spaces created by this user (owner fallback for pre-migration data)
+  const createdSpaces = await db
+    .select({
+      id: spaces.id,
+      name: spaces.name,
+      slug: spaces.slug,
+      description: spaces.description,
+      icon: spaces.icon,
+      createdAt: spaces.createdAt,
+    })
+    .from(spaces)
+    .where(and(eq(spaces.createdBy, userId), isNull(spaces.deletedAt)));
+
+  // Merge and deduplicate — created spaces get "owner" role
+  const seen = new Set(memberSpaces.map((s) => s.id));
+  const merged = [...memberSpaces];
+  for (const s of createdSpaces) {
+    if (!seen.has(s.id)) {
+      merged.push({ ...s, role: "owner" as const });
+      seen.add(s.id);
+    }
+  }
+  return merged;
 }
 
 export default async function SpacesPage() {
