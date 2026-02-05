@@ -58,10 +58,10 @@ async function getMemoriesForSlug(slug: string): Promise<Memory[]> {
     });
     if (Array.isArray(result)) return result;
     if (result && "results" in result) return result.results;
-    console.error(`[getMemoriesForSlug] Unexpected result format for slug=${slug}:`, result);
+    console.warn(`[memories] Unexpected response format for slug "${slug}":`, typeof result);
     return [];
   } catch (err) {
-    console.error(`[getMemoriesForSlug] Failed for slug=${slug}:`, err);
+    console.error(`[memories] Failed to fetch memories for slug "${slug}":`, err);
     return [];
   }
 }
@@ -73,16 +73,18 @@ async function getMemories(
   if (spaceSlug) {
     return getMemoriesForSlug(spaceSlug);
   }
-  // "All Spaces" — query each space and merge results
+  // "All Spaces" — fetch sequentially to avoid overwhelming the API container
   if (allSlugs && allSlugs.length > 0) {
-    const results = await Promise.all(allSlugs.map(getMemoriesForSlug));
-    return results
-      .flat()
-      .sort(
-        (a, b) =>
-          new Date(b.created_at ?? 0).getTime() -
-          new Date(a.created_at ?? 0).getTime()
-      );
+    const allMemories: Memory[] = [];
+    for (const slug of allSlugs) {
+      const memories = await getMemoriesForSlug(slug);
+      allMemories.push(...memories);
+    }
+    return allMemories.sort(
+      (a, b) =>
+        new Date(b.created_at ?? 0).getTime() -
+        new Date(a.created_at ?? 0).getTime()
+    );
   }
   return [];
 }
