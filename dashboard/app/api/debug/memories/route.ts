@@ -64,10 +64,12 @@ export async function GET() {
   }
 
   debug.memoriesPerSlug = perSlug;
-  debug.totalMemories = Object.values(perSlug).reduce((sum, v) => {
+  let totalMemories = 0;
+  for (const v of Object.values(perSlug)) {
     const obj = v as Record<string, unknown>;
-    return sum + (typeof obj.count === "number" ? obj.count : 0);
-  }, 0);
+    if (typeof obj.count === "number") totalMemories += obj.count;
+  }
+  debug.totalMemories = totalMemories;
 
   return NextResponse.json(debug, { status: 200 });
 }
