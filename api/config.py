@@ -1,7 +1,9 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="MEMORAI_", env_file=".env")
+
     # OpenRouter (free models for Mem0's LLM processing)
     openrouter_api_key: str = ""
     llm_model: str = "arcee-ai/trinity-large-preview:free"  # Supports JSON mode required by Mem0
@@ -23,10 +25,6 @@ class Settings(BaseSettings):
 
     # PostgreSQL (for spaces, users, etc.)
     database_url: str = ""
-
-    class Config:
-        env_prefix = "MEMORAI_"
-        env_file = ".env"
 
 
 settings = Settings()

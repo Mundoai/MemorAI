@@ -553,16 +553,19 @@ explicitly search for relevant information.`,
       }
 
       // No context: return all memories for the project
-      const result = await apiRequest({
+      const result = await apiRequest<unknown>({
         method: "GET",
         path: "/memories",
         params: { user_id: project },
       });
 
-      // Limit the results
-      const memories = Array.isArray(result)
-        ? result.slice(0, limit ?? 15)
-        : result;
+      // Handle both array and dict {"results": [...]} response formats (mem0 v1.0+)
+      const raw = Array.isArray(result)
+        ? result
+        : (result as Record<string, unknown>)?.results ?? result;
+      const memories = Array.isArray(raw)
+        ? raw.slice(0, limit ?? 15)
+        : raw;
 
       return {
         content: [
@@ -603,13 +606,17 @@ every individual memory.`,
   },
   async ({ project }) => {
     try {
-      const result = await apiRequest<unknown[]>({
+      const result = await apiRequest<unknown>({
         method: "GET",
         path: "/memories",
         params: { user_id: project },
       });
 
-      const memories = Array.isArray(result) ? result : [];
+      // Handle both array and dict {"results": [...]} response formats (mem0 v1.0+)
+      const raw = Array.isArray(result)
+        ? result
+        : (result as Record<string, unknown>)?.results ?? [];
+      const memories = Array.isArray(raw) ? raw : [];
       const total = memories.length;
       const recent = memories.slice(0, 10);
 

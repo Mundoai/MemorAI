@@ -53,7 +53,6 @@ def _get_mem0_config() -> dict:
                 "embedding_model_dims": settings.embedding_dims,
             },
         },
-        "version": "v1.1",
     }
 
 
